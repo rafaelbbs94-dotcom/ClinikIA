@@ -20,10 +20,14 @@ app.post("/mensagem", async (req, res) => {
     .from("pacientes")
     .insert([{ nome, telefone }]);
 
-  if (error) {
-    console.error(error);
-    return res.status(500).json({ erro: "Erro ao salvar" });
-  }
+ if (error) {
+  console.error("ERRO SUPABASE:", error);
+  return res.status(500).json({
+    erro: "Erro ao salvar",
+    detalhe: error.message,
+    codigo: error.code
+  });
+}
 
   res.json({ mensagem: "Paciente salvo com sucesso!" });
 });
