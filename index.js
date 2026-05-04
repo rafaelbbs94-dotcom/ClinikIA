@@ -75,7 +75,6 @@ app.post("/mensagem", async (req, res) => {
 
   res.json({ resposta });
 });
-}
 
 const PORT = process.env.PORT || 3000;
 
