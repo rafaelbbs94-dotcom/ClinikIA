@@ -77,9 +77,6 @@ app.post("/mensagem", async (req, res) => {
 });
 }
 
-  res.json({ mensagem: "Paciente salvo com sucesso!" });
-});
-
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
