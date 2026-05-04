@@ -1,20 +1,31 @@
 const express = require("express");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 app.use(express.json());
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 app.get("/", (req, res) => {
   res.send("API da Clínica rodando 🚀");
 });
 
-app.post("/mensagem", (req, res) => {
-  const { texto } = req.body;
+app.post("/mensagem", async (req, res) => {
+  const { nome, telefone } = req.body;
 
-  console.log("Mensagem recebida:", texto);
+  const { data, error } = await supabase
+    .from("pacientes")
+    .insert([{ nome, telefone }]);
 
-  res.json({
-    resposta: "Recebemos sua mensagem! Em breve entraremos em contato."
-  });
+  if (error) {
+    console.error(error);
+    return res.status(500).json({ erro: "Erro ao salvar" });
+  }
+
+  res.json({ mensagem: "Paciente salvo com sucesso!" });
 });
 
 const PORT = process.env.PORT || 3000;
