@@ -22,12 +22,13 @@ app.post("/mensagem", async (req, res) => {
 
   if (texto.includes("oi") || texto.includes("olá") || texto.includes("bom dia") || texto.includes("boa tarde") || texto.includes("boa noite")) {
     resposta =
-      "Olá! Seja bem-vindo(a) à nossa clínica 😊\n\n" +
-      "Como posso te ajudar hoje?\n\n" +
-      "1️⃣ Agendar exame\n" +
-      "2️⃣ Agendar consulta\n" +
-      "3️⃣ Tirar dúvidas sobre preparo\n" +
-      "4️⃣ Falar com atendente";
+  "Olá! Seja bem-vindo(a) ao Dr. Thiago Bartolomei - Endoscopia Digestória 😊\n\n" +
+  "Atendimento rápido e seguro.\n\n" +
+  "Como posso te ajudar hoje?\n\n" +
+  "1️⃣ Agendar exame\n" +
+  "2️⃣ Agendar consulta\n" +
+  "3️⃣ Tirar dúvidas sobre preparo\n" +
+  "4️⃣ Falar com atendente";
   } else if (texto === "1" || texto.includes("agendar exame")) {
     resposta =
       "Perfeito. Para iniciar o agendamento do exame, me informe por favor:\n\n" +
