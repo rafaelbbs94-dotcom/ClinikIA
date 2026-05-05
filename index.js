@@ -17,9 +17,16 @@ app.post("/mensagem", async (req, res) => {
   try {
     const body = req.body;
 
-   const mensagemRecebida = body.text?.message || body.message || "";
-const telefone = body.phone || body.chatId?.split("@")[0] || "";
+   const mensagemRecebida =
+  body.text?.message ||
+  body.message ||
+  body.body ||
+  "";
 
+const telefone =
+  body.phone ||
+  body.chatId?.split("@")[0] ||
+  "";
     const texto = mensagemRecebida.toLowerCase().trim();
 
     await supabase.from("mensagens").insert([{
