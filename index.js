@@ -90,8 +90,9 @@ console.log("TELEFONE:", telefone);
 const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
   method: "POST",
   headers: {
-    "Content-Type": "application/json"
-  },
+  "Content-Type": "application/json",
+  "Client-Token": process.env.ZAPI_CLIENT_TOKEN
+},
   body: JSON.stringify({
     phone: telefone,
     message: resposta
