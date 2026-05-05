@@ -12,81 +12,78 @@ const supabase = createClient(
 app.get("/", (req, res) => {
   res.send("API da Clínica rodando 🚀");
 });
-
 app.post("/mensagem", async (req, res) => {
-  const { nome, telefone, mensagem } = req.body;
+  try {
+    const body = req.body;
 
-  const texto = (mensagem || "").trim().toLowerCase();
+    const mensagemRecebida = body.text?.message || "";
+    const telefone = body.phone || "";
 
-  await supabase
-    .from("mensagens")
-    .insert([{
-      paciente_nome: nome || "Não informado",
-      telefone: telefone || "Não informado",
-      mensagem: mensagem || ""
-    }]);
+    const texto = mensagemRecebida.toLowerCase().trim();
 
-  const { data: config } = await supabase
-    .from("configuracoes")
-    .select("*")
-    .eq("ativo", true)
-    .limit(1)
-    .single();
+    // BUSCA CONFIGURAÇÃO
+    const { data: config } = await supabase
+      .from("configuracoes")
+      .select("*")
+      .eq("ativo", true)
+      .single();
 
-  const { data: opcoes } = await supabase
-    .from("menu_opcoes")
-    .select("*")
-    .eq("ativo", true)
-    .order("numero", { ascending: true });
+    // BUSCA MENU
+    const { data: opcoes } = await supabase
+      .from("menu_opcoes")
+      .select("*")
+      .eq("ativo", true)
+      .order("numero", { ascending: true });
 
-  const nomeEmpresa = config?.nome_empresa || "nossa clínica";
-  const saudacao = config?.saudacao || "Olá! Seja bem-vindo(a) à";
+    const nomeEmpresa = config?.nome_empresa || "nossa clínica";
+    const saudacao = config?.saudacao || "Olá! Seja bem-vindo(a) à";
 
-  const menuTexto = opcoes
-    .map((opcao) => `${opcao.numero}️⃣ ${opcao.titulo}`)
-    .join("\n");
+    const menuTexto = opcoes
+      .map((opcao) => `${opcao.numero}️⃣ ${opcao.titulo}`)
+      .join("\n");
 
-  if (
-    texto.includes("oi") ||
-    texto.includes("olá") ||
-    texto.includes("ola") ||
-    texto.includes("bom dia") ||
-    texto.includes("boa tarde") ||
-    texto.includes("boa noite") ||
-    texto === ""
-  ) {
-    return res.json({
-      resposta:
+    let resposta = "";
+
+    if (
+      texto.includes("oi") ||
+      texto.includes("olá") ||
+      texto.includes("ola") ||
+      texto === ""
+    ) {
+      resposta =
         `${saudacao} ${nomeEmpresa} 😊\n\n` +
         `Como posso te ajudar hoje?\n\n` +
-        `${menuTexto}`
-    });
-  }
+        `${menuTexto}`;
+    } else {
+      const numero = parseInt(texto);
 
-  const numeroEscolhido = parseInt(texto);
+      const opcao = opcoes.find(o => o.numero === numero);
 
-  if (!isNaN(numeroEscolhido)) {
-    const opcaoSelecionada = opcoes.find(
-      (opcao) => Number(opcao.numero) === numeroEscolhido
-    );
-
-    if (opcaoSelecionada) {
-      return res.json({
-        resposta: opcaoSelecionada.resposta
-      });
+      if (opcao) {
+        resposta = opcao.resposta;
+      } else {
+        resposta =
+          "Não entendi sua mensagem.\n\nEscolha uma opção:\n\n" +
+          menuTexto;
+      }
     }
+
+    // ENVIA RESPOSTA PARA WHATSAPP
+    await fetch(`https://api.z-api.io/instances/SEU_INSTANCE_ID/token/SEU_TOKEN/send-text`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        phone: telefone,
+        message: resposta
+      })
+    });
+
+    res.sendStatus(200);
+
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
   }
-
-  return res.json({
-    resposta:
-      "Não entendi completamente sua mensagem.\n\n" +
-      "Escolha uma das opções abaixo:\n\n" +
-      menuTexto
-  });
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta " + PORT);
 });
