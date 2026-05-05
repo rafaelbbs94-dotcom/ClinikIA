@@ -16,7 +16,9 @@ app.get("/", (req, res) => {
 app.post("/mensagem", async (req, res) => {
   try {
     const body = req.body;
-
+    
+console.log("WEBHOOK RECEBIDO:", JSON.stringify(body, null, 2));
+    
    const mensagemRecebida =
   body.text?.message ||
   body.message ||
@@ -82,16 +84,23 @@ const telefone =
     }
 
     if (telefone) {
-      await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phone: telefone,
-          message: resposta
-        })
-      });
+      console.log("RESPOSTA GERADA:", resposta);
+console.log("TELEFONE:", telefone);
+
+const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    phone: telefone,
+    message: resposta
+  })
+});
+
+const resultadoEnvio = await envio.text();
+console.log("STATUS ENVIO Z-API:", envio.status);
+console.log("RESPOSTA Z-API:", resultadoEnvio);
     }
 
     res.status(200).json({ resposta });
