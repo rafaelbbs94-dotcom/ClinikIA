@@ -16,6 +16,10 @@ app.get("/", (req, res) => {
 app.post("/mensagem", async (req, res) => {
   try {
     const body = req.body;
+    // 🔥 EVITA LOOP (mensagens do próprio bot)
+if (body.fromMe === true) {
+  return res.sendStatus(200);
+}
     
 console.log("WEBHOOK RECEBIDO:", JSON.stringify(body, null, 2));
     
