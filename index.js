@@ -16,55 +16,7 @@ app.get("/", (req, res) => {
 app.post("/mensagem", async (req, res) => {
   const { nome, telefone, mensagem } = req.body;
 
-  const texto = (mensagem || "").toLowerCase();
-
-  let resposta = "";
-
-  if (texto.includes("oi") || texto.includes("olá") || texto.includes("bom dia") || texto.includes("boa tarde") || texto.includes("boa noite")) {
-    resposta =
-  "Olá! Seja bem-vindo(a) ao Dr. Thiago Bartolomei - Endoscopia Digestória 😊\n\n" +
-  "Atendimento rápido e seguro.\n\n" +
-  "Como posso te ajudar hoje?\n\n" +
-  "1️⃣ Agendar exame\n" +
-  "2️⃣ Agendar consulta\n" +
-  "3️⃣ Tirar dúvidas sobre preparo\n" +
-  "4️⃣ Falar com atendente";
-  } else if (texto === "1" || texto.includes("agendar exame")) {
-    resposta =
-      "Perfeito. Para iniciar o agendamento do exame, me informe por favor:\n\n" +
-      "1. Nome completo\n" +
-      "2. Telefone para contato\n" +
-      "3. Qual exame deseja realizar\n" +
-      "4. Você possui pedido médico/guia?\n" +
-      "5. Qual é o seu plano de saúde?";
-  } else if (texto === "2" || texto.includes("agendar consulta")) {
-    resposta =
-      "Certo. Para consulta, me informe por favor:\n\n" +
-      "1. Nome completo\n" +
-      "2. Telefone para contato\n" +
-      "3. Especialidade ou médico desejado\n" +
-      "4. Melhor período para atendimento\n" +
-      "5. Qual é o seu plano de saúde?";
-  } else if (texto === "3" || texto.includes("preparo") || texto.includes("endoscopia") || texto.includes("colonoscopia")) {
-    resposta =
-      "Claro. Sobre qual preparo você deseja informação?\n\n" +
-      "1️⃣ Endoscopia\n" +
-      "2️⃣ Colonoscopia\n" +
-      "3️⃣ Outro exame\n\n" +
-      "Se for endoscopia, normalmente é necessário jejum antes do exame e seguir as orientações específicas da clínica.";
-  } else if (texto === "4" || texto.includes("atendente") || texto.includes("humano")) {
-    resposta =
-      "Certo. Vou direcionar seu atendimento para uma pessoa da equipe.\n" +
-      "Aguarde um momento, por favor.";
-  } else {
-    resposta =
-      "Não entendi completamente sua mensagem.\n\n" +
-      "Escolha uma opção:\n\n" +
-      "1️⃣ Agendar exame\n" +
-      "2️⃣ Agendar consulta\n" +
-      "3️⃣ Tirar dúvidas sobre preparo\n" +
-      "4️⃣ Falar com atendente";
-  }
+  const texto = (mensagem || "").trim().toLowerCase();
 
   await supabase
     .from("mensagens")
@@ -74,7 +26,63 @@ app.post("/mensagem", async (req, res) => {
       mensagem: mensagem || ""
     }]);
 
-  res.json({ resposta });
+  const { data: config } = await supabase
+    .from("configuracoes")
+    .select("*")
+    .eq("ativo", true)
+    .limit(1)
+    .single();
+
+  const { data: opcoes } = await supabase
+    .from("menu_opcoes")
+    .select("*")
+    .eq("ativo", true)
+    .order("numero", { ascending: true });
+
+  const nomeEmpresa = config?.nome_empresa || "nossa clínica";
+  const saudacao = config?.saudacao || "Olá! Seja bem-vindo(a) à";
+
+  const menuTexto = opcoes
+    .map((opcao) => `${opcao.numero}️⃣ ${opcao.titulo}`)
+    .join("\n");
+
+  if (
+    texto.includes("oi") ||
+    texto.includes("olá") ||
+    texto.includes("ola") ||
+    texto.includes("bom dia") ||
+    texto.includes("boa tarde") ||
+    texto.includes("boa noite") ||
+    texto === ""
+  ) {
+    return res.json({
+      resposta:
+        `${saudacao} ${nomeEmpresa} 😊\n\n` +
+        `Como posso te ajudar hoje?\n\n` +
+        `${menuTexto}`
+    });
+  }
+
+  const numeroEscolhido = parseInt(texto);
+
+  if (!isNaN(numeroEscolhido)) {
+    const opcaoSelecionada = opcoes.find(
+      (opcao) => Number(opcao.numero) === numeroEscolhido
+    );
+
+    if (opcaoSelecionada) {
+      return res.json({
+        resposta: opcaoSelecionada.resposta
+      });
+    }
+  }
+
+  return res.json({
+    resposta:
+      "Não entendi completamente sua mensagem.\n\n" +
+      "Escolha uma das opções abaixo:\n\n" +
+      menuTexto
+  });
 });
 
 const PORT = process.env.PORT || 3000;
