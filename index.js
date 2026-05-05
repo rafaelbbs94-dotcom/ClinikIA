@@ -79,7 +79,6 @@ app.post("/mensagem", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Client-Token": process.env.ZAPI_CLIENT_TOKEN
         },
         body: JSON.stringify({
           phone: telefone,
