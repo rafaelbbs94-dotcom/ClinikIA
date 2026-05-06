@@ -17,7 +17,10 @@ app.post("/mensagem", async (req, res) => {
   try {
     const body = req.body;
     // 🔥 EVITA LOOP (mensagens do próprio bot)
-if (body.fromMe === true) {
+if (
+  body.fromMe === true ||
+  body.isStatusReply === true
+) {
   return res.sendStatus(200);
 }
     
@@ -112,6 +115,22 @@ if (!atendimentoAtual) {
   return res.json({
     resposta:
       "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:"
+  });
+}
+
+      if (atendimentoAtual.etapa === "aguardando_nome") {
+
+  await supabase
+    .from("atendimentos")
+    .update({
+      nome: mensagemRecebida,
+      etapa: "aguardando_plano"
+    })
+    .eq("id", atendimentoAtual.id);
+
+  return res.json({
+    resposta:
+      "Perfeito 😊\n\nAgora me informe seu plano de saúde:"
   });
 }
      if (atendimentoAtual.etapa === "aguardando_nome") {
