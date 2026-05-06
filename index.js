@@ -133,21 +133,7 @@ if (!atendimentoAtual) {
       "Perfeito 😊\n\nAgora me informe seu plano de saúde:"
   });
 }
-     if (atendimentoAtual.etapa === "aguardando_nome") {
-
-  await supabase
-    .from("atendimentos")
-    .update({
-      nome: mensagemRecebida,
-      etapa: "aguardando_plano"
-    })
-    .eq("id", atendimentoAtual.id);
-
-  return res.json({
-    resposta:
-      "Perfeito 😊\n\nAgora me informe seu plano de saúde:"
-  });
-}
+     
       const numero = parseInt(texto);
       const opcao = (opcoes || []).find(
         (item) => Number(item.numero) === numero
