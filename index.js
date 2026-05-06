@@ -138,25 +138,31 @@ app.post("/mensagem", async (req, res) => {
     console.log("TELEFONE:", telefone);
 
     const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Client-Token": process.env.ZAPI_CLIENT_TOKEN
-      },
-      body: JSON.stringify({
-        phone: telefone,
-        message: resposta
-      })
-    });
+     const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Client-Token": process.env.ZAPI_CLIENT_TOKEN
+  },
+  body: JSON.stringify({
+    phone: telefone,
+    message: resposta
+  })
+});
 
-    const resultadoEnvio = await envio.text();
-    console.log("STATUS ENVIO Z-API:", envio.status);
-    console.log("RESPOSTA Z-API:", resultadoEnvio);
+const resultadoEnvio = await envio.text();
+console.log("STATUS ENVIO Z-API:", envio.status);
+console.log("RESPOSTA Z-API:", resultadoEnvio);
 
-    res.sendStatus(200);
+res.sendStatus(200);
+   
+} catch (error) {
+  console.error("ERRO:", error);
+  res.sendStatus(500);
+}
+});
+const PORT = process.env.PORT || 3000;
 
-  } catch (error) {
-    console.error("ERRO:", error);
-    res.sendStatus(500);
-  }
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta " + PORT);
 });
