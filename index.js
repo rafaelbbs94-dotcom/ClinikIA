@@ -112,10 +112,8 @@ if (!atendimentoAtual) {
     })
     .eq("id", atendimentoAtual.id);
 
-  return res.json({
-    resposta:
-      "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:"
-  });
+ resposta =
+  "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:";
 }
 
       if (atendimentoAtual.etapa === "aguardando_nome") {
@@ -130,10 +128,8 @@ if (!atendimentoAtual) {
 
   return res.json({
     resposta:
-      "Perfeito 😊\n\nAgora me informe seu plano de saúde:"
-  });
-}
-     
+     resposta =
+  "Perfeito 😊\n\nAgora me informe seu plano de saúde:";
       const numero = parseInt(texto);
       const opcao = (opcoes || []).find(
         (item) => Number(item.numero) === numero
