@@ -33,6 +33,28 @@ const telefone =
   body.phone ||
   body.chatId?.split("@")[0] ||
   "";
+    const { data: atendimento } = await supabase
+  .from("atendimentos")
+  .select("*")
+  .eq("telefone", telefone)
+  .eq("status", "em_andamento")
+  .maybeSingle();
+
+let atendimentoAtual = atendimento;
+
+if (!atendimentoAtual) {
+  const { data: novo } = await supabase
+    .from("atendimentos")
+    .insert([{
+      telefone: telefone,
+      etapa: "inicio",
+      status: "em_andamento"
+    }])
+    .select()
+    .single();
+
+  atendimentoAtual = novo;
+}
     const texto = mensagemRecebida.toLowerCase().trim();
 
     await supabase.from("mensagens").insert([{
@@ -77,6 +99,36 @@ const telefone =
         `Como posso te ajudar hoje?\n\n` +
         `${menuTexto}`;
     } else {
+      if (texto === "1") {
+
+  await supabase
+    .from("atendimentos")
+    .update({
+      etapa: "aguardando_nome",
+      tipo: "exame"
+    })
+    .eq("id", atendimentoAtual.id);
+
+  return res.json({
+    resposta:
+      "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:"
+  });
+}
+     if (atendimentoAtual.etapa === "aguardando_nome") {
+
+  await supabase
+    .from("atendimentos")
+    .update({
+      nome: mensagemRecebida,
+      etapa: "aguardando_plano"
+    })
+    .eq("id", atendimentoAtual.id);
+
+  return res.json({
+    resposta:
+      "Perfeito 😊\n\nAgora me informe seu plano de saúde:"
+  });
+}
       const numero = parseInt(texto);
       const opcao = (opcoes || []).find(
         (item) => Number(item.numero) === numero
