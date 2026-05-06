@@ -26,12 +26,12 @@ if (
     
 console.log("WEBHOOK RECEBIDO:", JSON.stringify(body, null, 2));
     
-   const mensagemRecebida =
+ const mensagemRecebida =
+  body.texto?.mensagem ||
   body.text?.message ||
   body.message ||
   body.body ||
   "";
-
 const telefone =
   body.phone ||
   body.chatId?.split("@")[0] ||
