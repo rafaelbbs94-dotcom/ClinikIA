@@ -12,59 +12,58 @@ const supabase = createClient(
 app.get("/", (req, res) => {
   res.send("API da Clínica rodando 🚀");
 });
-
 app.post("/mensagem", async (req, res) => {
   try {
-    const body = req.body;
-    // 🔥 EVITA LOOP (mensagens do próprio bot)
-if (
-  body.fromMe === true ||
-  body.isStatusReply === true
-) {
-  return res.sendStatus(200);
-}
-    
-console.log("WEBHOOK RECEBIDO:", JSON.stringify(body, null, 2));
-    
- const mensagemRecebida =
-  body.texto?.mensagem ||
-  body.text?.message ||
-  body.message ||
-  body.body ||
-  "";
-const telefone =
-  body.phone ||
-  body.chatId?.split("@")[0] ||
-  "";
-    const { data: atendimento } = await supabase
-  .from("atendimentos")
-  .select("*")
-  .eq("telefone", telefone)
-  .eq("status", "em_andamento")
-  .maybeSingle();
+    const corpo = req.body;
 
-let atendimentoAtual = atendimento;
+    if (corpo.fromMe === true || corpo.isStatusReply === true) {
+      return res.sendStatus(200);
+    }
 
-if (!atendimentoAtual) {
-  const { data: novo } = await supabase
-    .from("atendimentos")
-    .insert([{
-      telefone: telefone,
-      etapa: "inicio",
-      status: "em_andamento"
-    }])
-    .select()
-    .single();
+    console.log("WEBHOOK RECEBIDO:", JSON.stringify(corpo, null, 2));
 
-  atendimentoAtual = novo;
-}
+    const mensagemRecebida =
+      corpo.texto?.mensagem ||
+      corpo.text?.message ||
+      corpo.message ||
+      corpo.body ||
+      "";
+
+    const telefone =
+      corpo.phone ||
+      corpo.chatId?.split("@")[0] ||
+      "";
+
     const texto = mensagemRecebida.toLowerCase().trim();
 
     await supabase.from("mensagens").insert([{
-      paciente_nome: body.nome || "Não informado",
+      paciente_nome: corpo.nome || "Não informado",
       telefone: telefone || "Não informado",
       mensagem: mensagemRecebida || ""
     }]);
+
+    const { data: atendimento } = await supabase
+      .from("atendimentos")
+      .select("*")
+      .eq("telefone", telefone)
+      .eq("status", "em_andamento")
+      .maybeSingle();
+
+    let atendimentoAtual = atendimento;
+
+    if (!atendimentoAtual) {
+      const { data: novo } = await supabase
+        .from("atendimentos")
+        .insert([{
+          telefone,
+          etapa: "inicio",
+          status: "em_andamento"
+        }])
+        .select()
+        .single();
+
+      atendimentoAtual = novo;
+    }
 
     const { data: config } = await supabase
       .from("configuracoes")
@@ -88,7 +87,29 @@ if (!atendimentoAtual) {
 
     let resposta = "";
 
-    if (
+    if (atendimentoAtual.etapa === "aguardando_nome") {
+      await supabase
+        .from("atendimentos")
+        .update({
+          nome: mensagemRecebida,
+          etapa: "aguardando_plano"
+        })
+        .eq("id", atendimentoAtual.id);
+
+      resposta = "Perfeito 😊\n\nAgora me informe seu plano de saúde:";
+
+    } else if (texto === "1") {
+      await supabase
+        .from("atendimentos")
+        .update({
+          etapa: "aguardando_nome",
+          tipo: "exame"
+        })
+        .eq("id", atendimentoAtual.id);
+
+      resposta = "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:";
+
+    } else if (
       texto.includes("oi") ||
       texto.includes("olá") ||
       texto.includes("ola") ||
@@ -101,35 +122,8 @@ if (!atendimentoAtual) {
         `${saudacao} ${nomeEmpresa} 😊\n\n` +
         `Como posso te ajudar hoje?\n\n` +
         `${menuTexto}`;
+
     } else {
-      if (texto === "1") {
-
-  await supabase
-    .from("atendimentos")
-    .update({
-      etapa: "aguardando_nome",
-      tipo: "exame"
-    })
-    .eq("id", atendimentoAtual.id);
-
- resposta =
-  "Perfeito! Vamos iniciar seu agendamento 😊\n\nMe informe seu nome completo:";
-}
-
-      if (atendimentoAtual.etapa === "aguardando_nome") {
-
-  await supabase
-    .from("atendimentos")
-    .update({
-      nome: mensagemRecebida,
-      etapa: "aguardando_plano"
-    })
-    .eq("id", atendimentoAtual.id);
-
-  return res.json({
-    resposta:
-     resposta =
-  "Perfeito 😊\n\nAgora me informe seu plano de saúde:";
       const numero = parseInt(texto);
       const opcao = (opcoes || []).find(
         (item) => Number(item.numero) === numero
@@ -140,40 +134,29 @@ if (!atendimentoAtual) {
         : "Não entendi sua mensagem.\n\nEscolha uma opção:\n\n" + menuTexto;
     }
 
-    if (telefone) {
-      console.log("RESPOSTA GERADA:", resposta);
-console.log("TELEFONE:", telefone);
+    console.log("RESPOSTA GERADA:", resposta);
+    console.log("TELEFONE:", telefone);
 
-const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
-  method: "POST",
-  headers: {
-  "Content-Type": "application/json",
-  "Client-Token": process.env.ZAPI_CLIENT_TOKEN
-},
-  body: JSON.stringify({
-    phone: telefone,
-    message: resposta
-  })
-});
+    const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Client-Token": process.env.ZAPI_CLIENT_TOKEN
+      },
+      body: JSON.stringify({
+        phone: telefone,
+        message: resposta
+      })
+    });
 
-const resultadoEnvio = await envio.text();
-console.log("STATUS ENVIO Z-API:", envio.status);
-console.log("RESPOSTA Z-API:", resultadoEnvio);
-    }
+    const resultadoEnvio = await envio.text();
+    console.log("STATUS ENVIO Z-API:", envio.status);
+    console.log("RESPOSTA Z-API:", resultadoEnvio);
 
-    res.status(200).json({ resposta });
+    res.sendStatus(200);
 
   } catch (error) {
     console.error("ERRO:", error);
-    res.status(500).json({
-      erro: "Erro no bot",
-      detalhe: error.message
-    });
+    res.sendStatus(500);
   }
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Servidor rodando na porta " + PORT);
 });
