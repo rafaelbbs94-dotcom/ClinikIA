@@ -137,18 +137,20 @@ app.post("/mensagem", async (req, res) => {
     console.log("RESPOSTA GERADA:", resposta);
     console.log("TELEFONE:", telefone);
 
-    const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
-     const envio = await fetch(`https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Client-Token": process.env.ZAPI_CLIENT_TOKEN
-  },
-  body: JSON.stringify({
-    phone: telefone,
-    message: resposta
-  })
-});
+    const envio = await fetch(
+  `${process.env.EVOLUTION_URL}/message/sendText/${process.env.EVOLUTION_INSTANCE}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": process.env.EVOLUTION_API_KEY
+    },
+    body: JSON.stringify({
+      number: telefone,
+      text: resposta
+    })
+  }
+);
 
 const resultadoEnvio = await envio.text();
 console.log("STATUS ENVIO Z-API:", envio.status);
